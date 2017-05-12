@@ -1,2 +1,7 @@
 Linux 4.10
 
+QEMU 2.90
+
+	List of Dependencies
+
+		libpixman-1-dev
