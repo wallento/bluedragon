@@ -1,3 +1,29 @@
-*.swp
+# CC
+*.a
+*.map
+*.o
 
-toolchain/qemu
+tools/toolchain/qemu
+
+# Other
+*.tmp
+*.swp
+*.old
+
+# Linux
+*.builtin
+*.cmd
+*.cpio.*
+*.lds
+*.ko
+*.mod.c
+*.order
+*.symvers
+linux/.*
+linux/vmlinux
+linux/arch/openrisc/include/generated/
+linux/arch/openrisc/kernel/asm-offsets.s
+linux/include/config/
+linux/include/generated
+linux/kernel/bounds.s
+linux/scripts/mod/devicetable-offsets.s
