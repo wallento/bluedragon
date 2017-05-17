@@ -4,7 +4,7 @@
 #include <linux/module.h>	/* Needed by all modules */
 #include <linux/kernel.h>	/* Needed for KERN_INFO */
 
-int init_module(void)
+static int __init hello_init_module(void)
 {
 		printk(KERN_INFO "Hello world 1.\n");
 
@@ -15,10 +15,14 @@ int init_module(void)
 			return 0;
 }
 
-void cleanup_module(void)
+static void __exit hello_cleanup_module(void)
 {
 		printk(KERN_INFO "Goodbye world 1.\n");
 }
 
+module_init(hello_init_module);
+module_exit(hello_cleanup_module);
+
+MODULE_INFO(intree, "Y");
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Pedro H. Penna");

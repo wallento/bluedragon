@@ -4,8 +4,6 @@ export ARCH=openrisc
 
 export CROSS_COMPILE=or1k-linux-
 
-export CFLAGS_MODULE=-fno-pic
-
 all: defconfig
 	cd linux && \
 	$(MAKE)
