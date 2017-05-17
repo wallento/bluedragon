@@ -4,4 +4,6 @@ QEMU 2.90
 
 	List of Dependencies
 
+		zlib1g-dev
+		libglib2.0-dev
 		libpixman-1-dev
