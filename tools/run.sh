@@ -1,3 +1,4 @@
+export PATH=tools/toolchain/qemu/bin/:$PATH
 
 qemu-system-or1k \
 	-cpu or1200 \
