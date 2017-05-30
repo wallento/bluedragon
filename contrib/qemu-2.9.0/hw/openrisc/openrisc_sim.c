@@ -35,6 +35,8 @@
 
 #define KERNEL_LOAD_ADDR 0x100
 
+extern void lisnoc_mm_init(MemoryRegion *, hwaddr, qemu_irq);
+
 static void main_cpu_reset(void *opaque)
 {
     OpenRISCCPU *cpu = opaque;
@@ -133,6 +135,8 @@ static void openrisc_sim_init(MachineState *machine)
         openrisc_sim_net_init(get_system_memory(), 0x92000000,
                               0x92000400, cpu->env.irq[4], nd_table);
     }
+
+	lisnoc_mm_init(get_system_memory(), 0x94000000, cpu->env.irq[5]);
 
     cpu_openrisc_load_kernel(ram_size, kernel_filename, cpu);
 }

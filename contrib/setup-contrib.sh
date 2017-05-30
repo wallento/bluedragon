@@ -40,10 +40,9 @@ function setup_qemu
 
 	cd contrib
 
-	tar -xjvf $QEMU.tar.bz2
-
 	cd $QEMU
 
+	rm -rf build
 	mkdir build
 	cd build
 
@@ -54,9 +53,6 @@ function setup_qemu
 	make -j $ncores all
 
 	make install
-
-	cd ../..
-	rm -rf $QEMU
 	
 	cd $basedir
 }

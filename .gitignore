@@ -3,7 +3,12 @@
 *.map
 *.o
 
+# Tags
+contrib/qemu-2.9.0/tags
+
+# QEMU
 tools/toolchain/qemu
+contrib/qemu-2.9.0/build/
 
 # Other
 *.tmp

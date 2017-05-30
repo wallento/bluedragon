@@ -3,6 +3,7 @@
  *  you've read from the dev file
  */
 
+#include <asm/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/fs.h>
@@ -82,6 +83,7 @@ static void __exit hello_cleanup_module(void)
  */
 static int device_open(struct inode *inode, struct file *file)
 {
+	char *p;
 	static int counter = 0;
 
 	if (Device_Open)
@@ -91,6 +93,9 @@ static int device_open(struct inode *inode, struct file *file)
 	sprintf(msg, "I already told you %d times Hello world!\n", counter++);
 	msg_Ptr = msg;
 	try_module_get(THIS_MODULE);
+
+	p = ioremap_nocache(0x94000000, 8);
+	*p = 1;
 
 	return SUCCESS;
 }
