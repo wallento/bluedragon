@@ -9,6 +9,8 @@
 #include <linux/fs.h>
 #include <asm/uaccess.h>	/* for put_user */
 
+#define OPTIMSOC_NA_HWADDR 0xe0100000 
+
 /*  
  *  Prototypes - this would normally go in a .h file
  */
@@ -83,7 +85,7 @@ static void __exit hello_cleanup_module(void)
  */
 static int device_open(struct inode *inode, struct file *file)
 {
-	char *p;
+	char *w, *r;
 	static int counter = 0;
 
 	if (Device_Open)
@@ -94,8 +96,9 @@ static int device_open(struct inode *inode, struct file *file)
 	msg_Ptr = msg;
 	try_module_get(THIS_MODULE);
 
-	p = ioremap_nocache(0x94000000, 8);
-	*p = 1;
+	w = r = ioremap_nocache(OPTIMSOC_NA_HWADDR, 4096);
+	w += 2048;
+	*w = *r;
 
 	return SUCCESS;
 }
