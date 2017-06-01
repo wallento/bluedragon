@@ -85,20 +85,19 @@ static void __exit hello_cleanup_module(void)
  */
 static int device_open(struct inode *inode, struct file *file)
 {
-	char *w, *r;
-	static int counter = 0;
+	int *w, *r;
 
 	if (Device_Open)
 		return -EBUSY;
 
+	w = r = ioremap_nocache(OPTIMSOC_NA_HWADDR, 4096);
+	w += 512;
+	*w = *r;
+
 	Device_Open++;
-	sprintf(msg, "I already told you %d times Hello world!\n", counter++);
+	sprintf(msg, "number of endpoints in the noc %d", *r);
 	msg_Ptr = msg;
 	try_module_get(THIS_MODULE);
-
-	w = r = ioremap_nocache(OPTIMSOC_NA_HWADDR, 4096);
-	w += 2048;
-	*w = *r;
 
 	return SUCCESS;
 }

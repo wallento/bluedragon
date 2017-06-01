@@ -39,34 +39,42 @@
  */
 #define OPTIMSOC_NUMEP 256
 
+/*
+ * OpTiMSoC NoC Adapter base address.
+ */
+#define OPTIMSOC_NA_BASE 0x00
+
 #define OPTIMSOC_NA_REGSIZE 0x2000
 
-#define OPTIMSOC_NA_EP_BASE(base) \
-	((base) + OPTIMSOC_NA_REG_SIZE)
+/*
+ * OpTiMSoC NoC Adapter endpoint registers base address.
+ */
+#define OPTIMSOC_NA_EP_BASE \
+	(OPTIMSOC_NA_BASE + OPTIMSOC_NA_REGSIZE)
 
 /*
  * Number of endpoints register.
  */
-#define OPTIMSOC_NA_REG_NUMEP(base) \
-	(base)
+#define OPTIMSOC_NA_REG_NUMEP \
+	(OPTIMSOC_NA_BASE)
 
 /*
  * Send register for ith endpoint.
  */
-#define OPTIMSOC_NA_REG_SEND(base,i) \
-	(OPTIMSOC_NA_EP_BASE(base) + (i)*OPTIMSOC_NA_EP_REGSIZE + 0)
+#define OPTIMSOC_NA_REG_SEND(i) \
+	(OPTIMSOC_NA_EP_BASE + (i)*OPTIMSOC_NA_EP_REGSIZE + 0)
 
 /*
  * Receive register for ith endpoint.
  */
-#define OPTIMSOC_NA_REG_RECV(base,i) \
-	(OPTIMSOC_NA_EP_BASE(base) + (i)*OPTIMSOC_NA_EP_REGSIZE + 0)
+#define OPTIMSOC_NA_REG_RECV(i) \
+	(OPTIMSOC_NA_EP_BASE + (i)*OPTIMSOC_NA_EP_REGSIZE + 0)
 
 /*
  * Enable register for ith endpoint.
  */
-#define OPTIMSOC_NA_REG_ENABLE(base,i) \
-	(OPTIMSOC_NA_EP_BASE(base) + (i)*OPTIMSOC_NA_EP_REGSIZE + 4)
+#define OPTIMSOC_NA_REG_ENABLE(i) \
+	(OPTIMSOC_NA_EP_BASE + (i)*OPTIMSOC_NA_EP_REGSIZE + 4)
 
 /*
  * NoC Adapter information.
@@ -86,12 +94,22 @@ static struct
 };
 
 /*
+ * Checks for the memory operation bounds.
+ */
+
+/*
  * Memory read callback.
  */
 static uint64_t optimsoc_na_mm_read(void *opaque, hwaddr addr, unsigned size)
 {
-	fprintf(stderr, "[QEMU] get data from me\n");
-	return (0);
+	uint64_t ret = 0;
+
+	if (addr == OPTIMSOC_NA_REG_NUMEP)
+		ret = OPTIMSOC_NUMEP;
+
+	fprintf(stderr, "[QEMU] take my data %x %" PRIu64 "\n", addr, ret);
+
+	return (ret);
 }
 
 /*
@@ -99,7 +117,7 @@ static uint64_t optimsoc_na_mm_read(void *opaque, hwaddr addr, unsigned size)
  */
 static void optimsoc_na_mm_write(void *opaque, hwaddr addr, uint64_t value, unsigned size)
 {
-	fprintf(stderr, "[QEMU] feed me with data\n");
+	fprintf(stderr, "[QEMU] feed me with data %" PRIu64 "\n", value);
 }
 
 /*
