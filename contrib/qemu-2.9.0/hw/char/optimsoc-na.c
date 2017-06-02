@@ -34,52 +34,78 @@
 #include "qemu/error-report.h"
 #include "hw/char/optimsoc-na.h"
 
+#define DEBUG(s) \
+	printf("[QEMU] %s\n", s)
+
+/**
+ * @brief NoC Adapter buffer size (in bytes).
+ */
 #define BUFSIZE 4096
 
 /*
  * Number of endpoints.
  */
-#define OPTIMSOC_NA_NUMEP 16
+#define OPTIMSOC_NUMEP 16
+
+/**
+ * @brief NoC Adapter base address.
+ */
+#define OPTIMSOC_BASE 0x0000
+
+/**
+ * @brief NoC Adapter offsets.
+ */
+#define OPTIMSOC_OFF 0x2000
+
+/**
+ * @brief NoC Adapter register mask.
+ */
+#define OPTIMSOC_REG_MASK 0xf
+
+/**
+ * @brief Register base addresses.
+ */
+/**@{*/
+#define OPTIMSOC_REG_BASE_NUMEP  (OPTIMSOC_BASE)                /**< Number of endpoints. */
+#define OPTIMSOC_REG_BASE_SEND   (OPTIMSOC_BASE + OPTIMSOC_OFF) /**< Send.                */
+#define OPTIMSOC_REG_BASE_RECV   (OPTIMSOC_BASE + OPTIMSOC_OFF) /**< Receive.             */
+#define OPTIMSOC_REG_BASE_ENABLE (OPTIMSOC_BASE + OPTIMSOC_OFF) /**< Enable.              */
+/**@}*/
+
+/**
+ * @brief Register offsets.
+ */
+/**@{*/
+#define OPTIMSOC_REG_OFF_NUMEP  0x0 /**< Number of endpoints.  */
+#define OPTIMSOC_REG_OFF_SEND   0x0 /**< Send.                 */
+#define OPTIMSOC_REG_OFF_RECV   0x0 /**< Receive.              */
+#define OPTIMSOC_REG_OFF_ENABLE 0x4 /**< Enable.               */
+/**@}*/
+
+/**
+ * @brief Registers.
+ */
+#define OPTIMSOC_REG_NUMEP        (OPTIMSOC_REG_BASE_NUMEP + OPTIMSOC_REG_OFF_NUMEP)                                  /**< Number of endpoints.  */
+#define OPTIMSOC_REG_SEND(addr)   (((addr) - (OPTIMSOC_REG_BASE_SEND + OPTIMSOC_REG_BASE_SEND))/OPTIMSOC_OFF)     /**< Send.                 */
+#define OPTIMSOC_REG_RECV(addr)   (((addr) - (OPTIMSOC_REG_BASE_RECV + OPTIMSOC_REG_BASE_RECV))/OPTIMSOC_OFF)     /**< Receive.              */
+#define OPTIMSOC_REG_ENABLE(addr) (((addr) - (OPTIMSOC_REG_BASE_ENABLE + OPTIMSOC_REG_BASE_ENABLE))/OPTIMSOC_OFF) /**< Enable.               */
+/**@}*/
 
 /*
- * OpTiMSoC NoC Adapter base address.
+ * NoC Adapter information.
  */
-#define OPTIMSOC_NA_BASE 0x00
+static struct
+{
+	MemoryRegion *addrspace;     /**< Residing address space.     */
+	MemoryRegion io;             /**< Memory mapped IO region.    */
+	hwaddr base;                 /**< Base address.               */
+	qemu_irq irq;                /*< IRQ.                         */
+	int enabled[OPTIMSOC_NUMEP]; /**< Enabled registered address. */
+} info;
 
-#define OPTIMSOC_NA_REGSIZE 0x2000
-
-/*
- * OpTiMSoC NoC Adapter endpoint registers base address.
- */
-#define OPTIMSOC_NA_EP_BASE \
-	(OPTIMSOC_NA_BASE + OPTIMSOC_NA_REGSIZE)
-
-/*
- * Number of endpoints register.
- */
-#define OPTIMSOC_NA_REG_NUMEP \
-	(OPTIMSOC_NA_BASE)
-
-/*
- * Send register for ith endpoint.
- */
-#define OPTIMSOC_NA_REG_SEND(i) \
-	(OPTIMSOC_NA_EP_BASE + (i)*OPTIMSOC_NA_EP_REGSIZE + 0)
-
-/*
- * Receive register for ith endpoint.
- */
-#define OPTIMSOC_NA_REG_RECV(i) \
-	(OPTIMSOC_NA_EP_BASE + (i)*OPTIMSOC_NA_EP_REGSIZE + 0)
-
-/*
- * Enable register for ith endpoint.
- */
-#define OPTIMSOC_NA_REG_ENABLE(i) \
-	(OPTIMSOC_NA_EP_BASE + (i)*OPTIMSOC_NA_EP_REGSIZE + 4)
-
-#define DEBUG(str) \
-	fprintf(stdout, "[QEMU] %s\n", (str));
+/*============================================================================*
+ * Buffer Operations                                                          *
+ *============================================================================*/
 
 /**
  * Device buffers.
@@ -91,29 +117,8 @@ struct buffer
 	uint32_t data[BUFSIZE]; /* Data.               */
 };
 
-/*
- * NoC Adapter information.
- */
-static struct
-{
-	/* Device information. */
-	int numep;       /* Number of end points.    */
-
-	/* Platform information. */
-	MemoryRegion *addrspace; /* Residing address space.  */
-	MemoryRegion io;         /* Memory mapped IO region. */
-	hwaddr base;             /* Base address.            */
-	qemu_irq irq;            /* IRQ.                     */
-} info = {
-	OPTIMSOC_NA_NUMEP,
-};
-
-struct buffer in_buffers[OPTIMSOC_NA_NUMEP];
-struct buffer out_buffers[OPTIMSOC_NA_NUMEP];
-
-/*============================================================================*
- * Buffer Operations                                                          *
- *============================================================================*/
+struct buffer in_buffers[OPTIMSOC_NUMEP];
+struct buffer out_buffers[OPTIMSOC_NUMEP];
 
 /*
  * Initializes a buffer.
@@ -122,8 +127,7 @@ struct buffer out_buffers[OPTIMSOC_NA_NUMEP];
  */
 static void buffer_init(struct buffer *buf)
 {
-	buf->head = 0;
-	buf->tail = 0;
+	buf->head = buf->tail = 0;
 }
 
 /*
@@ -156,8 +160,12 @@ static uint32_t buffer_read(hwaddr addr)
 	int i;
 	int ep;
 	uint32_t word;
+
+	/* Bad register address. */
+	if ((addr & OPTIMSOC_REG_MASK) != OPTIMSOC_REG_OFF_RECV)
+		DEBUG("bad register address");
 	
-	ep = (addr - info.numep)/OPTIMSOC_NA_REGSIZE;
+	ep = OPTIMSOC_REG_RECV(addr);
 
 	/* Empty buffer. */
 	if (buffer_empty(&in_buffers[ep]))
@@ -179,8 +187,17 @@ static void buffer_write(hwaddr addr, uint32_t word)
 {
 	int i;
 	int ep;
+
+	/* Enable operation. */
+	if ((addr & OPTIMSOC_REG_MASK) == OPTIMSOC_REG_OFF_ENABLE)
+	{
+		ep = OPTIMSOC_REG_ENABLE(addr);
+		info.enabled[ep] = 1;
+
+		return;
+	}
 	
-	ep = (addr - info.numep)/OPTIMSOC_NA_REGSIZE;
+	ep = OPTIMSOC_REG_SEND(addr);
 
 	/* Empty buffer. */
 	if (buffer_full(&out_buffers[ep]))
@@ -208,8 +225,8 @@ static uint64_t optimsoc_na_mm_read(void *opaque, hwaddr addr, unsigned size)
 		DEBUG("bad size for read request");
 
 	/* Read number of entry points register. */
-	if (addr == OPTIMSOC_NA_REG_NUMEP)
-		return (info.numep);
+	if (addr == OPTIMSOC_REG_NUMEP)
+		return (OPTIMSOC_NUMEP);
 
 	DEBUG("optimsoc read");
 
@@ -251,9 +268,10 @@ void optimsoc_na_mm_init(MemoryRegion *addrspace, hwaddr base, qemu_irq irq)
 	info.addrspace = addrspace;
 	info.base = base;
 	info.irq = irq;
+	memset(info.enabled, 0, OPTIMSOC_NUMEP*sizeof(int));
 
 	/* Initialize device buffers. */
-	for (int i = 0; i < OPTIMSOC_NA_NUMEP; i++)
+	for (int i = 0; i < OPTIMSOC_NUMEP; i++)
 	{
 		buffer_init(&in_buffers[i]);
 		buffer_init(&out_buffers[i]);
@@ -261,7 +279,7 @@ void optimsoc_na_mm_init(MemoryRegion *addrspace, hwaddr base, qemu_irq irq)
 
 	/* Initializes memory mapped IO region. */
     memory_region_init_io(&info.io, NULL, &optimsoc_na_mm_ops, NULL, "optimsoc-na",
-		OPTIMSOC_NA_NUMEP*(OPTIMSOC_NA_REGSIZE + 1));
+		OPTIMSOC_NUMEP*(OPTIMSOC_OFF + 1));
 
 	/* Attach memory mapped IO region to the virtual address space. */
     memory_region_add_subregion(info.addrspace, info.base, &info.io);
