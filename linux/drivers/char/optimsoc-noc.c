@@ -5,6 +5,7 @@
 
 #include <asm/io.h>
 #include <linux/kernel.h>
+#include <linux/interrupt.h>
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <asm/uaccess.h>	/* for put_user */
@@ -42,6 +43,17 @@ static struct file_operations fops = {
 	.release = device_release
 };
 
+irqreturn_t irq_handler(int irq, void *foobar)
+{
+	printk(KERN_INFO "interrupt fired\n");
+	printk(KERN_ALERT "interrupt fired\n");
+	sprintf(msg, "interrupt fired\n");
+	msg_Ptr = msg;
+
+	return IRQ_HANDLED;
+}
+
+
 /*
  * This function is called when the module is loaded
  */
@@ -61,7 +73,15 @@ static int __init hello_init_module(void)
 	printk(KERN_INFO "the device file.\n");
 	printk(KERN_INFO "Remove the device file and module when done.\n");
 
-	return SUCCESS;
+	sprintf(msg, "NO interrupt fired\n");
+	msg_Ptr = msg;
+
+	/* 
+	 * Request IRQ 1, the keyboard IRQ, to go to our irq_handler.
+	 * SA_SHIRQ means we're willing to have othe handlers on this IRQ.
+	 * SA_INTERRUPT can be used to make the handler into a fast interrupt.
+	 */
+	return (request_irq(3, irq_handler, 0, "optimsoc-na-handler", (void *)(irq_handler)));
 }
 
 /*
@@ -95,8 +115,6 @@ static int device_open(struct inode *inode, struct file *file)
 	*w = *r;
 
 	Device_Open++;
-	sprintf(msg, "number of endpoints in the noc %d", *r);
-	msg_Ptr = msg;
 	try_module_get(THIS_MODULE);
 
 	return SUCCESS;

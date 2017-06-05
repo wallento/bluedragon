@@ -140,7 +140,7 @@ static void openrisc_sim_init(MachineState *machine)
                               0x92000400, cpu->env.irq[4], nd_table);
     }
 
-	optimsoc_na_mm_init(get_system_memory(), OPTIMSOC_NA_BASE_HWADDR, cpu->env.irq[5]);
+	optimsoc_na_mm_init(get_system_memory(), OPTIMSOC_NA_BASE_HWADDR, cpu->env.irq[3]);
 
     cpu_openrisc_load_kernel(ram_size, kernel_filename, cpu);
 }

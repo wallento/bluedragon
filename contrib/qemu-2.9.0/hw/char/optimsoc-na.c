@@ -117,17 +117,15 @@ struct buffer
 	uint32_t data[BUFSIZE]; /* Data.               */
 };
 
-struct buffer in_buffers[OPTIMSOC_NUMEP];
-struct buffer out_buffers[OPTIMSOC_NUMEP];
+struct buffer buffers[OPTIMSOC_NUMEP];
 
 /*
  * Initializes a buffer.
- *
- * @para buf Target buffer.
  */
-static void buffer_init(struct buffer *buf)
+static void buffer_init(void)
 {
-	buf->head = buf->tail = 0;
+	for (int i = 0; i < OPTIMSOC_NUMEP; i++)
+		buffers[i].head = buffers[i].tail = 0;
 }
 
 /*
@@ -168,12 +166,12 @@ static uint32_t buffer_read(hwaddr addr)
 	ep = OPTIMSOC_REG_RECV(addr);
 
 	/* Empty buffer. */
-	if (buffer_empty(&in_buffers[ep]))
+	if (buffer_empty(&buffers[ep]))
 		return (0);
 
-	i = in_buffers[ep].head;
-	word = in_buffers[ep].data[i];
-	in_buffers[ep].head = (in_buffers[ep].head + 1)%BUFSIZE;
+	i = buffers[ep].head;
+	word = buffers[ep].data[i];
+	buffers[ep].head = (buffers[ep].head + 1)%BUFSIZE;
 
 	return (word);
 }
@@ -200,15 +198,17 @@ static void buffer_write(hwaddr addr, uint32_t word)
 	ep = OPTIMSOC_REG_SEND(addr);
 
 	/* Empty buffer. */
-	if (buffer_full(&out_buffers[ep]))
+	if (buffer_full(&buffers[ep]))
 	{
 		DEBUG("out buffer overflow");
 		return;
 	}
 
-	i = in_buffers[ep].tail;
-	in_buffers[ep].data[i] = word;
-	in_buffers[ep].tail = (in_buffers[ep].tail + 1)%BUFSIZE;
+	i = buffers[ep].tail;
+	buffers[ep].data[i] = word;
+	buffers[ep].tail = (buffers[ep].tail + 1)%BUFSIZE;
+
+	qemu_irq_raise(info.irq);
 }
 
 /*============================================================================*
@@ -271,11 +271,7 @@ void optimsoc_na_mm_init(MemoryRegion *addrspace, hwaddr base, qemu_irq irq)
 	memset(info.enabled, 0, OPTIMSOC_NUMEP*sizeof(int));
 
 	/* Initialize device buffers. */
-	for (int i = 0; i < OPTIMSOC_NUMEP; i++)
-	{
-		buffer_init(&in_buffers[i]);
-		buffer_init(&out_buffers[i]);
-	}
+	buffer_init();
 
 	/* Initializes memory mapped IO region. */
     memory_region_init_io(&info.io, NULL, &optimsoc_na_mm_ops, NULL, "optimsoc-na",
