@@ -275,7 +275,7 @@ void optimsoc_na_mm_init(MemoryRegion *addrspace, hwaddr base, qemu_irq irq)
 
 	/* Initializes memory mapped IO region. */
     memory_region_init_io(&info.io, NULL, &optimsoc_na_mm_ops, NULL, "optimsoc-na",
-		OPTIMSOC_NUMEP*(OPTIMSOC_OFF + 1));
+		(OPTIMSOC_NUMEP + 1)*OPTIMSOC_OFF);
 
 	/* Attach memory mapped IO region to the virtual address space. */
     memory_region_add_subregion(info.addrspace, info.base, &info.io);

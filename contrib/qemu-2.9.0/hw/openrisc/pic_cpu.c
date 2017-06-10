@@ -44,10 +44,12 @@ static void openrisc_pic_cpu_handler(void *opaque, int irq, int level)
 		printf("[QEMU] interrupt %d\n", irq);
 
     if (cpu->env.picsr & cpu->env.picmr) {
-		if (irq > 2)
-		printf("[QEMU] interrupt fired %d\n", irq);
+		if (irq == 3)
+			printf("[QEMU] interrupt raise %d\n", irq);
         cpu_interrupt(cs, CPU_INTERRUPT_HARD);
     } else {
+		if (irq == 3)
+			printf("[QEMU] interrupt lower %d\n", irq);
         cpu_reset_interrupt(cs, CPU_INTERRUPT_HARD);
         cpu->env.picsr = 0;
     }
