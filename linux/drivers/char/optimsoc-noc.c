@@ -46,9 +46,6 @@ static struct file_operations fops = {
 irqreturn_t irq_handler(int irq, void *foobar)
 {
 	printk(KERN_INFO "interrupt fired\n");
-	printk(KERN_ALERT "interrupt fired\n");
-	sprintf(msg, "interrupt fired\n");
-	msg_Ptr = msg;
 
 	return IRQ_HANDLED;
 }
@@ -59,6 +56,8 @@ irqreturn_t irq_handler(int irq, void *foobar)
  */
 static int __init hello_init_module(void)
 {
+	int ret;
+
         Major = register_chrdev(0, DEVICE_NAME, &fops);
 
 	if (Major < 0) {
@@ -81,7 +80,12 @@ static int __init hello_init_module(void)
 	 * SA_SHIRQ means we're willing to have othe handlers on this IRQ.
 	 * SA_INTERRUPT can be used to make the handler into a fast interrupt.
 	 */
-	return (request_irq(3, irq_handler, 0, "optimsoc-na-handler", (void *)(irq_handler)));
+
+	ret = request_irq(3, irq_handler, 0, "optimsoc-na-handler", (void *)(irq_handler));
+
+	printk(KERN_INFO "request irq ret=%d\n", ret);
+
+	return (0);
 }
 
 /*
