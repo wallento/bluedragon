@@ -4,9 +4,6 @@ ncores=`grep -c ^processor /proc/cpuinfo`
 # Base directory.
 BASEDIR=$1
 
-# Contrib tools.
-QEMU=qemu-2.9.0
-
 #==============================================================================
 # usage()
 #==============================================================================
@@ -40,7 +37,7 @@ function setup_qemu
 
 	cd contrib
 
-	cd $QEMU
+	cd qemu
 
 	rm -rf build
 	mkdir build
