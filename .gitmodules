@@ -1,0 +1,3 @@
+[submodule "contrib/qemu"]
+	path = contrib/qemu
+	url = https://github.com/ppenna/qemu
