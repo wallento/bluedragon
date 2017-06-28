@@ -4,3 +4,6 @@
 [submodule "linux"]
 	path = linux
 	url = https://github.com/ppenna/linux
+[submodule "optimsoc"]
+	path = optimsoc
+	url = https://github.com/ppenna/optimsoc
