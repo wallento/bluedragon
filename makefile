@@ -7,11 +7,11 @@ export CROSS_COMPILE=or1k-linux-
 export CC=$(CURDIR)/tools/toolchain/or1k-linux-musl/bin/or1k-linux-musl-gcc
 
 
-export OUTDIR=$(CURDIR)/linux/arch/openrisc/initramfs
+export OUTDIR=$(CURDIR)/linux/arch/openrisc/init
 
-.PHONY: initramfs
+.PHONY: init
 
-all: defconfig initramfs
+all: defconfig init
 	cd linux && \
 	$(MAKE)
 
@@ -23,9 +23,9 @@ modules: defconfig
 	cd linux &&       \
 	$(MAKE) modules
 
-initramfs:
+init:
 	mkdir -p $(OUTDIR)
-	$(CC) initramfs/*.c -static -o $(OUTDIR)/init
+	$(CC) init/*.c -static -o $(OUTDIR)/init
 	
 
 clean:

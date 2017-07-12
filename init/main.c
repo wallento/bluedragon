@@ -76,8 +76,6 @@ int main(int argc, char **argv)
 	int ret;            /* Return value of syscalls    */
 	char buf[BUF_SIZE]; /* Buffer for I/O operations.  */
 
-	printf("Hello World!\n");
-
 	init_noc(devname);
 
 	/* Open NoC device. */
