@@ -35,12 +35,12 @@
 /**
  * Buffer size.
  */
-#define BUF_SIZE 128
+#define BUF_SIZE 16
 
 /**
  * @brief NoC device filename.
  */
-const char *devname = "/dev/noc";
+const char *devname = "/noc";
 
 /**
  * @brief Panics the utility.
@@ -75,12 +75,24 @@ int main(int argc, char **argv)
 	int fd;             /* NoC device file descriptor. */
 	int ret;            /* Return value of syscalls    */
 	char buf[BUF_SIZE]; /* Buffer for I/O operations.  */
+	char *const args[] = {"init", NULL};
 
 	init_noc(devname);
 
 	/* Open NoC device. */
 	printf("%-30s", "opening noc device...");
-	fd = ret = open(devname, O_RDONLY);
+	fd = ret = open(devname, O_RDWR);
+	if (ret < 0)
+		panic();
+	printf("[done]\n");
+
+	/* Fillup buffer. */
+	for (int i = 0; i < BUF_SIZE; i++)
+		buf[i] = i;
+
+	/* Write some data. */
+	printf("%-30s", "writing data...");
+	ret = write(fd, buf, BUF_SIZE);
 	if (ret < 0)
 		panic();
 	printf("[done]\n");
@@ -96,6 +108,8 @@ int main(int argc, char **argv)
 	printf("%-30s", "closing noc device...");
 	close(fd);
 	printf("[done]\n");
+
+	execv("/sbin/init", args);
 
 	/* Stop here. */
 	while (1)

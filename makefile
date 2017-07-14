@@ -7,7 +7,7 @@ export CROSS_COMPILE=or1k-linux-
 export CC=$(CURDIR)/tools/toolchain/or1k-linux-musl/bin/or1k-linux-musl-gcc
 
 
-export OUTDIR=$(CURDIR)/linux/arch/openrisc/init
+export OUTDIR=$(CURDIR)/linux/arch/openrisc/initramfs
 
 .PHONY: init
 
