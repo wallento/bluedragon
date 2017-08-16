@@ -92,7 +92,7 @@ int main(int argc, char **argv)
 
 	/* Write some data. */
 	printf("%-30s", "writing data...");
-	ret = write(fd, buf, BUF_SIZE);
+	ret = write(fd, buf, 1);
 	if (ret < 0)
 		panic();
 	printf("[done]\n");
@@ -108,8 +108,6 @@ int main(int argc, char **argv)
 	printf("%-30s", "closing noc device...");
 	close(fd);
 	printf("[done]\n");
-
-	execv("/sbin/init", args);
 
 	/* Stop here. */
 	while (1)
