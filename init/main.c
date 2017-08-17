@@ -59,59 +59,42 @@ static void init_noc(const char *pathname)
 	int ret;   /* Return values of syscalls. */
 	dev_t dev; /* NoC device number,         */
 
-	printf("%-30s", "initializing noc device...");
-
 	/* Create device file. */
 	dev = makedev(NOC_MAJOR, NOC_MINOR);
 	ret = mknod(pathname, S_IFCHR | S_IRUSR | S_IWUSR, dev);
 	if (ret != 0)
 		panic();
-
-	printf("[done]\n");
 }
 
 int main(int argc, char **argv)
 {
-	int fd;             /* NoC device file descriptor. */
-	int ret;            /* Return value of syscalls    */
-	char buf[BUF_SIZE]; /* Buffer for I/O operations.  */
-	char *const args[] = {"init", NULL};
+	int fd;   /* NoC device file descriptor. */
+	int ret;  /* Return value of syscalls    */
+	int buf[10]; /* Buffer for I/O operations.  */
 
 	init_noc(devname);
 
+	for (int i = 0; i < 10; i++)
+		buf[i] = 10 - i;
+
 	/* Open NoC device. */
-	printf("%-30s", "opening noc device...");
 	fd = ret = open(devname, O_RDWR);
 	if (ret < 0)
 		panic();
-	printf("[done]\n");
-
-	/* Fillup buffer. */
-	for (int i = 0; i < BUF_SIZE; i++)
-		buf[i] = i;
 
 	/* Write some data. */
-	printf("%-30s", "writing data...");
-	ret = write(fd, buf, 1);
+	ret = write(fd, buf, 10*sizeof(int));
 	if (ret < 0)
 		panic();
-	printf("[done]\n");
 
 	/* Read some data. */
-	printf("%-30s", "reading data...");
-	ret = read(fd, buf, 1);
+	ret = read(fd, buf, 10*sizeof(int));
 	if (ret < 0)
 		panic();
-	printf("[done]\n");
 
 	/* Close NoC device. */
-	printf("%-30s", "closing noc device...");
 	close(fd);
-	printf("[done]\n");
 
 	/* Stop here. */
-	while (1)
-		/* noop. */;
-
 	return (EXIT_SUCCESS);
 }
