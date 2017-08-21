@@ -30,7 +30,7 @@
 /**
  * @brief NoC minor device number.
  */
-#define NOC_MINOR 0
+#define NOC_MINOR 1
 
 /**
  * Buffer size.
@@ -74,23 +74,18 @@ int main(int argc, char **argv)
 
 	init_noc(devname);
 
-	for (int i = 0; i < 10; i++)
-		buf[i] = 10 - i;
-
 	/* Open NoC device. */
 	fd = ret = open(devname, O_RDWR);
 	if (ret < 0)
 		panic();
 
-	/* Write some data. */
-	ret = write(fd, buf, 10*sizeof(int));
-	if (ret < 0)
-		panic();
-
 	/* Read some data. */
-	ret = read(fd, buf, 10*sizeof(int));
-	if (ret < 0)
-		panic();
+	while (1)
+	{
+		ret = read(fd, buf, sizeof(int));
+		if (ret < 0)
+			panic();
+	}
 
 	/* Close NoC device. */
 	close(fd);
