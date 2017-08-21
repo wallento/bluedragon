@@ -17,7 +17,7 @@ all: defconfig init
 
 defconfig:
 	cd linux &&       \
-	$(MAKE) defconfig
+	$(MAKE) optimsoc_defconfig
 
 modules: defconfig
 	cd linux &&       \
